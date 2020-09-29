@@ -10,6 +10,7 @@ import os
 import sys
 import threading
 import getopt
+import time
 
 REQ_URL = "curl -s -Afreewheel \'http://%s:%d/dispatch?command=repository::show_object&id=%s&type=%s\'"
 SEPARATOR = ","
@@ -38,26 +39,33 @@ class DiffThread(threading.Thread):
         self.__open_res_file()
         for param in self.params:
             base_url = self.__build_req(self.host1, self.port1, param)
-            print "base_url %s" % base_url
             if base_url == "":
                 continue
             exp_url = self.__build_req(self.host2, self.port2, param)
-            print "exp_url %s" % exp_url
             if exp_url == "":
                 continue
             base_res_fd = os.popen(base_url, 'r')
-            base_res = base_res_fd.readlines()
+            base_res = "".join(base_res_fd.readlines())
             exp_res_fd = os.popen(exp_url, 'r')
-            exp_res = exp_res_fd.readlines()
+            exp_res = "".join(exp_res_fd.readlines())
             res = None
             if base_res != "" and exp_res != "" and base_res == exp_res:
                 res = param + " = ok\n"
             else:
                 res = param + "not\n" + base_res + "\n" + exp_res
-            self.res_file.write(res)
+                prefix = "./result/"
+                diff_base = prefix + param + "base"
+                diff_exp = prefix + param + "exp"
+                diff_base_file = open(diff_base, 'w')
+                diff_exp_file = open(diff_exp, 'w')
+                diff_base_file.write(base_res)
+                diff_exp_file.write(exp_res)
+                diff_base_file.close()
+                diff_exp_file.close()
 
-            print "==========================================="
-            print "[base_url] %s\n[exp_url] %s\n[base_res] %s\n[exp_res] %s\n" % (base_url, exp_url, base_res, exp_res)
+            self.res_file.write(res)
+            #print "[base_url] = %s, [exp_url] = %s, [base_res] = %s, [exp_res] = %s" % (base_url, exp_url, base_res, exp_res)
+            time.sleep(1)
 
         self.__close_res_file()
             
@@ -112,7 +120,6 @@ class RepaDiffer():
         l = [self.lines[i:i+batchsize] for i in range(0, len(self.lines), batchsize)]
         for item in l:
             self.split_lines.append(item)
-            print "split line %s" % item
 
 
 def main(argv):
