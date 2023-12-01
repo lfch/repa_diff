@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 diff_one()
 {
@@ -37,4 +37,9 @@ done
 
 IFS="$OLD_IFS"
 
+
 rm -f ./result/diff/*sorted*
+
+
+
+
